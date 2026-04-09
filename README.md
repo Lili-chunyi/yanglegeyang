@@ -2,9 +2,6 @@
 
 > 一款类似《羊了个羊》的多层堆叠卡片消除游戏，纯 HTML/CSS/JS 开发，无需任何依赖。
 
-!\[License]\(https\://img.shields.io/badge/license-MIT-blue.svg null)
-!\[Tech]\(https\://img.shields.io/badge/tech-HTML5%20%2B%20CSS3%20%2B%20JavaScript-green.svg null)
-
 ## 🎮 游戏玩法
 
 - **目标**：清空所有卡片即可获胜
