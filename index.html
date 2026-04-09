@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>羊了个羊 - 网页版消除游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #ffd700;
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .subtitle {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+        .version-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .version-btn {
+            padding: 30px 40px;
+            font-size: 24px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        .version-btn:hover {
+            transform: scale(1.05);
+        }
+        .version-btn.primary {
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+            color: white;
+            box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
+        }
+        .version-btn.secondary {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+        }
+        .version-desc {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐏 羊了个羊</h1>
+    <p class="subtitle">选择游戏版本开始体验</p>
+    
+    <div class="version-list">
+        <a href="game.html" class="version-btn primary">
+            🎮 标准版
+            <div class="version-desc">5关递进难度，21张/关</div>
+        </a>
+        <a href="game_easy.html" class="version-btn secondary">
+            🌟 简单版
+            <div class="version-desc">适合新手练习</div>
+        </a>
+    </div>
+    
+    <div class="footer">纯 HTML/CSS/JS 开发，无需任何依赖</div>
+</body>
+</html>
