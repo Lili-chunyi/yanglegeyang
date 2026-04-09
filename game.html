@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>羊了个羊 - 消除游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-item {
+            color: #fff;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .card-area {
+            width: 100%;
+            height: 420px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            position: absolute;
+            width: 65px;
+            height: 85px;
+            background: linear-gradient(145deg, #fff 0%, #e8e8e8 100%);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 34px;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            user-select: none;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            bottom: 3px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .card.clickable {
+            cursor: pointer;
+            border: 3px solid #ffd700;
+            animation: pulse 1.5s infinite;
+        }
+
+        .card.clickable:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .card.covered {
+            filter: brightness(0.6);
+            cursor: not-allowed;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(255, 215, 0, 0); }
+        }
+
+        @keyframes cardFall {
+            0% { transform: translateY(-20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .slot-area {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+        }
+
+        .slot {
+            width: 50px;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            transition: all 0.2s ease;
+        }
+
+        .slot.filled {
+            background: rgba(255, 255, 255, 0.2);
+            border-style: solid;
+            animation: cardFall 0.2s ease;
+        }
+
+        .slot.eliminating {
+            animation: eliminateFlash 0.3s ease-out;
+        }
+
+        @keyframes eliminateFlash {
+            0% { 
+                transform: scale(1);
+                background: rgba(255, 255, 255, 0.8);
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            }
+            50% { 
+                transform: scale(1.2);
+                background: rgba(255, 255, 255, 1);
+                box-shadow: 0 0 30px rgba(255, 255, 255, 1);
+            }
+            100% { 
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        .slot-area.eliminating {
+            animation: areaFlash 0.3s ease-out;
+        }
+
+        @keyframes areaFlash {
+            0% { box-shadow: inset 0 0 0 transparent; }
+            50% { box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.6); }
+            100% { box-shadow: inset 0 0 0 transparent; }
+        }
+
+        .tools {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .tool-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .tool-btn.shuffle {
+            background: linear-gradient(145deg, #4CAF50, #2E7D32);
+            color: white;
+        }
+
+        .tool-btn.undo {
+            background: linear-gradient(145deg, #2196F3, #1565C0);
+            color: white;
+        }
+
+        .tool-btn.reset {
+            background: linear-gradient(145deg, #9E9E9E, #616161);
+            color: white;
+        }
+
+        .tool-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .tool-btn:not(:disabled):hover {
+            transform: scale(1.1);
+        }
+
+        .tool-label {
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, #fff 0%, #f0f0f0 100%);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            animation: modalPop 0.3s ease;
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .modal-title.win {
+            color: #4CAF50;
+        }
+
+        .modal-title.lose {
+            color: #f44336;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .modal-btn {
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: linear-gradient(145deg, #ffd700, #ff9800);
+            color: #333;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .modal-btn.secondary {
+            background: linear-gradient(145deg, #9E9E9E, #616161);
+            color: white;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(145deg, #4CAF50, #2E7D32);
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                width: 50px;
+                height: 66px;
+                font-size: 26px;
+            }
+
+            .card-area {
+                height: 300px;
+            }
+
+            .slot {
+                width: 40px;
+                height: 52px;
+                font-size: 22px;
+            }
+
+            .slot-area {
+                gap: 5px;
+                padding: 10px;
+            }
+
+            .tool-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .modal-btn {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="stat-item">
+                <div>剩余卡片</div>
+                <div class="stat-value" id="remainingCards">12</div>
+            </div>
+            <div class="level-badge">第 <span id="levelNum">1</span> 关</div>
+            <div class="stat-item">
+                <div>槽位</div>
+                <div class="stat-value" id="slotCount">0/7</div>
+            </div>
+        </div>
+
+        <div class="card-area" id="cardArea"></div>
+
+        <div class="slot-area" id="slotArea"></div>
+
+        <div class="tools">
+            <button class="tool-btn shuffle" id="shuffleBtn" onclick="shuffleCards()">
+                🔀
+                <span class="tool-label">洗牌</span>
+            </button>
+            <button class="tool-btn undo" id="undoBtn" onclick="undo()" disabled>
+                ↩️
+                <span class="tool-label">撤回</span>
+            </button>
+            <button class="tool-btn reset" id="resetBtn" onclick="resetToLevel1()">
+                🔄
+                <span class="tool-label">重置</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle"></div>
+            <div class="modal-buttons" id="modalButtons"></div>
+        </div>
+    </div>
+
+    <script>
+        const EMOJIS = ['🐏', '🌾', '🪵', '🔥', '💧', '⭐', '🍎'];
+        const SLOT_COUNT = 7;
+        const CARD_WIDTH = 65;
+        const CARD_HEIGHT = 85;
+        const CARD_GAP = 4;
+
+        const LEVELS = [
+            {
+                level: 1,
+                totalCards: 12,
+                typeCount: 2,
+                cardsPerType: 6,
+                layers: [
+                    { rows: 3, cols: 3 },
+                    { rows: 1, cols: 3, offsetRow: 1, offsetCol: 0 }
+                ],
+                layerOffsetX: 20,
+                layerOffsetY: 15,
+                spreadWidth: 0.3,
+                spreadHeight: 0.3
+            },
+            {
+                level: 2,
+                totalCards: 21,
+                typeCount: 7,
+                cardsPerType: 3,
+                layers: [
+                    { rows: 3, cols: 4 },
+                    { rows: 2, cols: 3, offsetRow: 0.5, offsetCol: 0.5 },
+                    { rows: 1, cols: 2, offsetRow: 1, offsetCol: 1 }
+                ],
+                layerOffsetX: 18,
+                layerOffsetY: 12,
+                spreadWidth: 0.4,
+                spreadHeight: 0.4
+            },
+            {
+                level: 3,
+                totalCards: 21,
+                typeCount: 7,
+                cardsPerType: 3,
+                layers: [
+                    { rows: 3, cols: 4 },
+                    { rows: 2, cols: 3, offsetRow: 0.5, offsetCol: 0.5 },
+                    { rows: 2, cols: 2, offsetRow: 1, offsetCol: 1 },
+                    { rows: 1, cols: 1, offsetRow: 1.5, offsetCol: 1.5 }
+                ],
+                layerOffsetX: 14,
+                layerOffsetY: 10,
+                spreadWidth: 0.5,
+                spreadHeight: 0.5
+            },
+            {
+                level: 4,
+                totalCards: 21,
+                typeCount: 7,
+                cardsPerType: 3,
+                layers: [
+                    { rows: 3, cols: 4 },
+                    { rows: 3, cols: 3, offsetRow: 0, offsetCol: 0.5 },
+                    { rows: 2, cols: 2, offsetRow: 0.5, offsetCol: 1 },
+                    { rows: 2, cols: 2, offsetRow: 1, offsetCol: 1 },
+                    { rows: 1, cols: 1, offsetRow: 1.5, offsetCol: 1.5 }
+                ],
+                layerOffsetX: 12,
+                layerOffsetY: 8,
+                spreadWidth: 0.6,
+                spreadHeight: 0.55
+            },
+            {
+                level: 5,
+                totalCards: 21,
+                typeCount: 7,
+                cardsPerType: 3,
+                layers: [
+                    { rows: 3, cols: 5 },
+                    { rows: 3, cols: 4, offsetRow: 0, offsetCol: 0.5 },
+                    { rows: 2, cols: 3, offsetRow: 0.5, offsetCol: 1 },
+                    { rows: 2, cols: 2, offsetRow: 1, offsetCol: 1.5 },
+                    { rows: 1, cols: 1, offsetRow: 1.5, offsetCol: 2 },
+                    { rows: 1, cols: 1, offsetRow: 2, offsetCol: 2 }
+                ],
+                layerOffsetX: 10,
+                layerOffsetY: 6,
+                spreadWidth: 0.7,
+                spreadHeight: 0.6
+            }
+        ];
+
+        let currentLevel = 1;
+        let cards = [];
+        let slots = [];
+        let history = [];
+        let gameOver = false;
+
+        const cardArea = document.getElementById('cardArea');
+        const slotArea = document.getElementById('slotArea');
+        const remainingCardsEl = document.getElementById('remainingCards');
+        const slotCountEl = document.getElementById('slotCount');
+        const levelNumEl = document.getElementById('levelNum');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalButtons = document.getElementById('modalButtons');
+        const undoBtn = document.getElementById('undoBtn');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function generateLayout(levelConfig) {
+            const layout = [];
+            let cardIndex = 0;
+            
+            const maxRows = Math.max(...levelConfig.layers.map(l => l.rows + (l.offsetRow || 0)));
+            const maxCols = Math.max(...levelConfig.layers.map(l => l.cols + (l.offsetCol || 0)));
+            
+            for (let layerIdx = 0; layerIdx < levelConfig.layers.length; layerIdx++) {
+                const layer = levelConfig.layers[layerIdx];
+                const rows = layer.rows;
+                const cols = layer.cols;
+                
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        if (cardIndex >= levelConfig.totalCards) break;
+                        
+                        const offsetRow = layer.offsetRow || 0;
+                        const offsetCol = layer.offsetCol || 0;
+                        
+                        layout.push({
+                            layer: layerIdx,
+                            row: row + offsetRow,
+                            col: col + offsetCol
+                        });
+                        cardIndex++;
+                    }
+                }
+            }
+            
+            return layout;
+        }
+
+        function initGame() {
+            cards = [];
+            slots = [];
+            history = [];
+            gameOver = false;
+            modal.classList.remove('show');
+            undoBtn.disabled = true;
+
+            const levelConfig = LEVELS[currentLevel - 1];
+            levelNumEl.textContent = currentLevel;
+
+            let types = [];
+            for (let i = 0; i < levelConfig.typeCount; i++) {
+                for (let j = 0; j < levelConfig.cardsPerType; j++) {
+                    types.push(i);
+                }
+            }
+            while (types.length < levelConfig.totalCards) {
+                types.push(Math.floor(Math.random() * levelConfig.typeCount));
+            }
+            while (types.length > levelConfig.totalCards) {
+                types.pop();
+            }
+
+            shuffleArray(types);
+
+            const layout = generateLayout(levelConfig);
+
+            const spreadW = levelConfig.spreadWidth;
+            const spreadH = levelConfig.spreadHeight;
+            
+            const areaWidth = cardArea.offsetWidth;
+            const areaHeight = cardArea.offsetHeight;
+            
+            const layoutWidth = Math.max(...layout.map(p => p.col)) + 1;
+            const layoutHeight = Math.max(...layout.map(p => p.row)) + 1;
+            
+            const cardTotalWidth = CARD_WIDTH + CARD_GAP;
+            const cardTotalHeight = CARD_HEIGHT + CARD_GAP;
+            
+            const usedWidth = layoutWidth * cardTotalWidth;
+            const usedHeight = layoutHeight * cardTotalHeight;
+            
+            const maxSpreadWidth = areaWidth - usedWidth;
+            const maxSpreadHeight = areaHeight - usedHeight - 80;
+            
+            const spreadX = Math.max(0, maxSpreadWidth * spreadW / 2);
+            const spreadY = Math.max(0, maxSpreadHeight * spreadH / 2);
+            
+            const baseOffsetX = (areaWidth - usedWidth) / 2 - spreadX + cardTotalWidth / 2;
+            const baseOffsetY = (areaHeight - usedHeight - 80) / 2 - spreadY + cardTotalHeight / 2;
+
+            for (let i = 0; i < layout.length; i++) {
+                const pos = layout[i];
+                const layerOffset = levelConfig.layerOffsetX * pos.layer;
+                const layerOffsetY = levelConfig.layerOffsetY * pos.layer;
+                
+                const randomOffsetX = (Math.random() - 0.5) * 8;
+                const randomOffsetY = (Math.random() - 0.5) * 6;
+                
+                let baseX = baseOffsetX + pos.col * cardTotalWidth + layerOffset + randomOffsetX;
+                let baseY = baseOffsetY + pos.row * cardTotalHeight + layerOffsetY + randomOffsetY;
+                
+                if (baseY + CARD_HEIGHT > areaHeight - 90) {
+                    baseY = areaHeight - 90 - CARD_HEIGHT;
+                }
+                if (baseX < 5) baseX = 5;
+                if (baseX + CARD_WIDTH > areaWidth - 5) baseX = areaWidth - 5 - CARD_WIDTH;
+
+                cards.push({
+                    id: i,
+                    type: types[i],
+                    layer: pos.layer,
+                    row: pos.row,
+                    col: pos.col,
+                    x: baseX,
+                    y: baseY
+                });
+            }
+
+            updateClickable();
+            renderCards();
+            renderSlots();
+            updateStats();
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function updateClickable() {
+            for (let i = 0; i < cards.length; i++) {
+                cards[i].clickable = true;
+            }
+
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                for (let j = 0; j < cards.length; j++) {
+                    if (i === j) continue;
+                    const other = cards[j];
+                    if (other.layer > card.layer) {
+                        if (isCompletelyCovered(card, other)) {
+                            card.clickable = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function isCompletelyCovered(card, other) {
+            const margin = 8;
+            return other.x < card.x + margin &&
+                   other.x + CARD_WIDTH > card.x + CARD_WIDTH - margin &&
+                   other.y < card.y + margin &&
+                   other.y + CARD_HEIGHT > card.y + CARD_HEIGHT - margin;
+        }
+
+        function renderCards() {
+            cardArea.innerHTML = '';
+
+            const sortedCards = [...cards].sort((a, b) => b.layer - a.layer || a.y - b.y || a.x - b.x);
+
+            for (const card of sortedCards) {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.style.left = card.x + 'px';
+                cardEl.style.top = card.y + 'px';
+                cardEl.textContent = EMOJIS[card.type];
+
+                if (!card.clickable) {
+                    cardEl.classList.add('covered');
+                } else {
+                    cardEl.classList.add('clickable');
+                    cardEl.onclick = () => clickCard(card.id);
+                }
+
+                cardArea.appendChild(cardEl);
+            }
+        }
+
+        function renderSlots() {
+            slotArea.innerHTML = '';
+
+            for (let i = 0; i < SLOT_COUNT; i++) {
+                const slotEl = document.createElement('div');
+                slotEl.className = 'slot';
+                if (slots[i] !== undefined) {
+                    slotEl.classList.add('filled');
+                    slotEl.textContent = EMOJIS[slots[i]];
+                }
+                slotArea.appendChild(slotEl);
+            }
+        }
+
+        function updateStats() {
+            remainingCardsEl.textContent = cards.length;
+            slotCountEl.textContent = slots.length + '/7';
+        }
+
+        function clickCard(cardId) {
+            if (gameOver) return;
+
+            const cardIndex = cards.findIndex(c => c.id === cardId);
+            if (cardIndex === -1) return;
+
+            const card = cards[cardIndex];
+            if (!card.clickable) return;
+
+            saveHistory();
+
+            slots.push(card.type);
+            cards.splice(cardIndex, 1);
+
+            updateClickable();
+            const hadElimination = checkAndEliminate();
+
+            renderCards();
+            if (!hadElimination) {
+                renderSlots();
+            }
+            updateStats();
+            updateUndoButton();
+
+            if (cards.length === 0) {
+                setTimeout(() => showResult(true), 300);
+                return;
+            }
+
+            if (slots.length === SLOT_COUNT) {
+                if (!hasMatchInSlots()) {
+                    showResult(false);
+                    return;
+                }
+            }
+
+            const clickableCards = cards.filter(c => c.clickable);
+            if (clickableCards.length === 0 && !canAllBeCleared()) {
+                showResult(false);
+            }
+        }
+
+        function canAllBeCleared() {
+            const counts = {};
+            for (const type of slots) {
+                counts[type] = (counts[type] || 0) + 1;
+            }
+            for (const card of cards) {
+                counts[card.type] = (counts[card.type] || 0) + 1;
+            }
+            for (const type in counts) {
+                if (counts[type] % 3 !== 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function checkAndEliminate() {
+            let hadElimination = false;
+            let changed = true;
+            while (changed) {
+                changed = false;
+                const counts = {};
+                for (const type of slots) {
+                    counts[type] = (counts[type] || 0) + 1;
+                }
+
+                for (const type in counts) {
+                    if (counts[type] >= 3) {
+                        const removeCount = Math.min(counts[type], 3);
+                        const indicesToRemove = [];
+                        for (let i = slots.length - 1; i >= 0 && indicesToRemove.length < removeCount; i--) {
+                            if (slots[i] === parseInt(type)) {
+                                indicesToRemove.push(i);
+                            }
+                        }
+                        
+                        if (indicesToRemove.length > 0) {
+                            hadElimination = true;
+                            showEliminateAnimation(indicesToRemove);
+                            for (const idx of indicesToRemove) {
+                                slots.splice(idx, 1);
+                            }
+                            changed = true;
+                        }
+                        break;
+                    }
+                }
+            }
+            return hadElimination;
+        }
+
+        function showEliminateAnimation(indices) {
+            const slotEls = slotArea.querySelectorAll('.slot');
+            const areaEl = slotArea;
+            
+            areaEl.classList.add('eliminating');
+            
+            indices.forEach(idx => {
+                if (slotEls[idx]) {
+                    slotEls[idx].classList.add('eliminating');
+                }
+            });
+
+            setTimeout(() => {
+                areaEl.classList.remove('eliminating');
+                indices.forEach(idx => {
+                    if (slotEls[idx]) {
+                        slotEls[idx].classList.remove('eliminating');
+                    }
+                });
+                renderSlots();
+            }, 250);
+        }
+
+        function hasMatchInSlots() {
+            const counts = {};
+            for (const type of slots) {
+                counts[type] = (counts[type] || 0) + 1;
+            }
+            for (const type in counts) {
+                if (counts[type] >= 3) return true;
+            }
+            return false;
+        }
+
+        function saveHistory() {
+            history.push({
+                cards: JSON.parse(JSON.stringify(cards)),
+                slots: [...slots]
+            });
+            if (history.length > 1) {
+                history.shift();
+            }
+        }
+
+        function undo() {
+            if (history.length === 0 || gameOver) return;
+
+            const prevState = history.pop();
+            cards = prevState.cards;
+            slots = prevState.slots;
+
+            updateClickable();
+            renderCards();
+            renderSlots();
+            updateStats();
+            updateUndoButton();
+        }
+
+        function updateUndoButton() {
+            undoBtn.disabled = history.length === 0;
+        }
+
+        function shuffleCards() {
+            if (gameOver || cards.length === 0) return;
+
+            saveHistory();
+
+            const types = cards.map(c => c.type);
+            shuffleArray(types);
+
+            for (let i = 0; i < cards.length; i++) {
+                cards[i].type = types[i];
+            }
+
+            renderCards();
+            updateUndoButton();
+        }
+
+        function showResult(isWin) {
+            gameOver = true;
+            
+            if (isWin) {
+                if (currentLevel >= 5) {
+                    modalTitle.textContent = '🎉 恭喜通关！';
+                    modalTitle.className = 'modal-title win';
+                    modalButtons.innerHTML = `
+                        <button class="modal-btn" onclick="resetToLevel1()">再玩一次</button>
+                    `;
+                } else {
+                    modalTitle.textContent = `恭喜通过第 ${currentLevel} 关！`;
+                    modalTitle.className = 'modal-title win';
+                    modalButtons.innerHTML = `
+                        <button class="modal-btn secondary" onclick="restartGame()">重玩本关</button>
+                        <button class="modal-btn primary" onclick="nextLevel()">下一关</button>
+                    `;
+                }
+            } else {
+                modalTitle.textContent = '💀 失败！';
+                modalTitle.className = 'modal-title lose';
+                modalButtons.innerHTML = `
+                    <button class="modal-btn" onclick="restartGame()">重玩本关</button>
+                `;
+            }
+            
+            modal.classList.add('show');
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        function nextLevel() {
+            if (currentLevel < 5) {
+                currentLevel++;
+                initGame();
+            }
+        }
+
+        function resetToLevel1() {
+            currentLevel = 1;
+            initGame();
+        }
+
+        window.addEventListener('resize', () => {
+            if (!gameOver) {
+                initGame();
+            }
+        });
+
+        initGame();
+    </script>
+</body>
+</html>
