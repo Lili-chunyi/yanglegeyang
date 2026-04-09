@@ -8,7 +8,11 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
         .game-container { width: 100%; max-width: 500px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .page-back-btn { position: fixed; left: 20px; top: 20px; background: linear-gradient(135deg, #607D8B, #455A64); color: white; border: none; padding: 10px 20px; border-radius: 25px; font-size: 16px; cursor: pointer; z-index: 100; }
+        .page-back-btn:hover { transform: scale(1.05); }
         .header { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(255,255,255,0.1); border-radius: 15px; }
+        .header .stat-item { margin: 0 auto; }
+        .header .level-badge { margin: 0 auto; }
         .stat-item { color: #fff; font-size: 14px; text-align: center; }
         .stat-value { font-size: 24px; font-weight: bold; color: #ffd700; }
         .level-badge { background: linear-gradient(135deg, #ff9800, #ff5722); padding: 5px 15px; border-radius: 20px; color: white; font-weight: bold; }
@@ -28,6 +32,7 @@
         .tool-btn.shuffle { background: linear-gradient(145deg, #4CAF50, #2E7D32); color: white; }
         .tool-btn.undo { background: linear-gradient(145deg, #2196F3, #1565C0); color: white; }
         .tool-btn.reset { background: linear-gradient(145deg, #9E9E9E, #616161); color: white; }
+        .tool-btn.back { background: linear-gradient(145deg, #607D8B, #455A64); color: white; }
         .tool-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .tool-btn:not(:disabled):hover { transform: scale(1.1); }
         .tool-label { font-size: 10px; font-weight: bold; }
@@ -45,6 +50,7 @@
 </head>
 <body>
     <div class="game-container">
+        <button class="page-back-btn" onclick="showBackConfirm()">← 返回</button>
         <div class="header">
             <div class="stat-item"><div>剩余卡片</div><div class="stat-value" id="remainingCards">12</div></div>
             <div class="level-badge">第 <span id="levelNum">1</span> 关</div>
@@ -64,11 +70,20 @@
             <div class="modal-buttons" id="modalButtons"></div>
         </div>
     </div>
+    <div class="modal" id="backModal">
+        <div class="modal-content">
+            <div class="modal-title">返回后将重新开始游戏</div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeBackModal()">取消</button>
+                <button class="modal-btn primary" onclick="goBackToMenu()">确认</button>
+            </div>
+        </div>
+    </div>
     <script>
         const EMOJIS = ['🐏', '🌾', '🪵', '🔥', '💧', '⭐', '🍎'];
         const SLOT_COUNT = 7, CARD_WIDTH = 65, CARD_HEIGHT = 85, CARD_GAP = 4;
         const LEVELS = [
-            { level:1, totalCards:12, typeCount:2, cardsPerType:6, layers:[{rows:3,cols:3},{rows:1,cols:3,offsetRow:1,offsetCol:0}], layerOffsetX:20, layerOffsetY:15, spreadWidth:0.3, spreadHeight:0.3 },
+            { level:1, totalCards:12, typeCount:4, cardsPerType:3, layers:[{rows:3,cols:3},{rows:1,cols:3,offsetRow:1,offsetCol:0}], layerOffsetX:20, layerOffsetY:15, spreadWidth:0.3, spreadHeight:0.3 },
             { level:2, totalCards:21, typeCount:7, cardsPerType:3, layers:[{rows:3,cols:4},{rows:2,cols:3,offsetRow:0.5,offsetCol:0.5},{rows:1,cols:2,offsetRow:1,offsetCol:1}], layerOffsetX:18, layerOffsetY:12, spreadWidth:0.4, spreadHeight:0.4 },
             { level:3, totalCards:21, typeCount:7, cardsPerType:3, layers:[{rows:3,cols:4},{rows:2,cols:3,offsetRow:0.5,offsetCol:0.5},{rows:2,cols:2,offsetRow:1,offsetCol:1},{rows:1,cols:1,offsetRow:1.5,offsetCol:1.5}], layerOffsetX:14, layerOffsetY:10, spreadWidth:0.5, spreadHeight:0.5 },
             { level:4, totalCards:21, typeCount:7, cardsPerType:3, layers:[{rows:3,cols:4},{rows:3,cols:3,offsetRow:0,offsetCol:0.5},{rows:2,cols:2,offsetRow:0.5,offsetCol:1},{rows:2,cols:2,offsetRow:1,offsetCol:1},{rows:1,cols:1,offsetRow:1.5,offsetCol:1.5}], layerOffsetX:12, layerOffsetY:8, spreadWidth:0.6, spreadHeight:0.55 },
@@ -97,6 +112,9 @@
         function restartGame(){initGame();}
         function nextLevel(){if(currentLevel<5){currentLevel++;initGame();}}
         function resetToLevel1(){currentLevel=1;initGame();}
+        function showBackConfirm(){document.getElementById('backModal').classList.add('show');}
+        function closeBackModal(){document.getElementById('backModal').classList.remove('show');}
+        function goBackToMenu(){window.location.href='index.html';}
         window.addEventListener('resize',()=>{if(!gameOver)initGame();});
         initGame();
     </script>
